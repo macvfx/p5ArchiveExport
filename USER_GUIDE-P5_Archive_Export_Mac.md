@@ -1,14 +1,17 @@
 # P5 Archive Export - Mac App User Guide
 
-**Version 1.1** | macOS 12 (Monterey) and later
+**Workflow Guide** | macOS 12 (Monterey) and later
 
 ---
 
 ## What Is This App?
 
-P5 Archive Export is a native macOS application that reads the Archiware P5 `resources.db` SQLite database and exports archive job data to CSV files. It is designed to track and report on all archived projects over 1 GB (configurable) from the P5 job log.
+P5 Archive Export is a native macOS application with two local workflows:
 
-**Important:** This app must be run directly on the Archiware P5 server where the `resources.db` file is located (typically at `/usr/local/aw/config/joblog/resources.db`). The database is opened in read-only mode, so the app will never modify your P5 data.
+- `SQL Export` reads the Archiware P5 `resources.db` SQLite database and exports archive job data to CSV files.
+- `Volume Export` uses local `nsdchat` to export per-volume tape or container inventories to TSV files, with optional archive-only filtering and optional `Full` to `Readonly` switching before export.
+
+**Important:** This first-pass volume workflow is designed for local use on the Archiware P5 server. The SQL database is opened read-only, but the optional volume-mode step can change eligible archive volumes from `Full` to `Readonly` if that setting is enabled.
 
 ---
 
@@ -17,7 +20,7 @@ P5 Archive Export is a native macOS application that reads the Archiware P5 `res
 ### First Launch
 
 1. Open **P5 Archive Export.app**
-2. The main dashboard window appears with a sidebar listing available SQL queries and a main content area
+2. The main dashboard window appears with a top workflow switch for `SQL Export` and `Volume Export`
 3. Before running your first export, open **Settings** to configure your paths
 
 ### Opening Settings
@@ -31,7 +34,7 @@ P5 Archive Export is a native macOS application that reads the Archiware P5 `res
 
 Settings are organized into four tabs:
 
-### General
+### SQL Export
 
 | Setting | Description | Default |
 |---------|-------------|---------|
@@ -40,6 +43,10 @@ Settings are organized into four tabs:
 | **CSV Delimiter** | Field separator for exported CSV files: Comma, Tab, or Semicolon | Comma |
 | **Include all built-in queries** | Master toggle to include or exclude all 13 bundled SQL queries from each export run | On |
 | **Include archive-jobs-above-1gb query** | Keep the primary archive-jobs-above-1gb query enabled even when all other built-in queries are turned off. This toggle is grayed out when the master toggle above is on (since it is already included). | On |
+| **Database Path** | Full path to the Archiware P5 `resources.db` file | `/usr/local/aw/config/joblog/resources.db` |
+| **External SQL Directory** | Optional folder containing your own `.sql` query files | Empty |
+| **Local SQL Output Directory** | Where SQL CSV exports are saved | `~/Documents/ArchiveCSV` |
+| **Network Copy Destination** | Optional mounted path to copy SQL CSVs to after export | Empty |
 
 **How these toggles work together:**
 
@@ -48,23 +55,29 @@ Settings are organized into four tabs:
 - **Only external queries:** Uncheck "Include all built-in queries", then uncheck "Include archive-jobs-above-1gb query". An orange warning will appear: *"All built-in queries are disabled. Only external queries will run."*
 - **Re-enabling all queries:** First uncheck "Include archive-jobs-above-1gb query", then check "Include all built-in queries" back on. This restores the default state with all 13 built-in queries active.
 
-### Paths
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Database Path** | Full path to the Archiware P5 `resources.db` file. A green checkmark indicates the file exists | `/usr/local/aw/config/joblog/resources.db` |
-| **External SQL Directory** | Optional folder containing your own `.sql` query files. Leave empty to use only the built-in queries | Empty (built-in only) |
-| **Local Output Directory** | Where CSV exports are saved. A timestamped subfolder is created for each export run | `~/Documents/ArchiveCSV` |
-| **Network Volume Path** | Optional network share to copy CSVs to after each export. If the volume is not mounted, the copy is silently skipped | Empty (disabled) |
-
 Each path field has:
 - A **green checkmark** or **red X** indicating whether the path exists
 - A **Browse...** button to select the path using a file picker
 
-### Schedule
+### Volume Export
 
 | Setting | Description | Default |
 |---------|-------------|---------|
+| **nsdchat Path** | Full path to the local `nsdchat` binary | `/usr/local/aw/bin/nsdchat` |
+| **Local Volume Output Directory** | Where per-volume TSV exports are saved | `~/Documents/ArchiveTSV` |
+| **Network Copy Destination** | Optional mounted path to copy volume TSVs and volume-list CSVs to | Empty |
+| **Naming Mode** | Controls whether filenames include mode/date suffixes for non-readonly volumes | `Volume + Barcode` |
+| **Archive volumes only** | Limits the run to archive volumes only | On |
+| **Export volume list CSV** | Exports a full p5 volume list CSV alongside per-volume TSVs | Off |
+| **Switch Full to Readonly before export** | Attempts to change eligible archive volumes from `Full` to `Readonly` before inventory export | Off |
+| **Sort by generation** | Organizes output into LTO generation subfolders when possible | On |
+| **Overwrite files** | Allows existing files to be replaced during export | Off |
+
+### Automation
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Scheduled Workflow** | Which workflow the timer runs: SQL Export, Volume Export, or Both | SQL Export |
 | **Frequency** | How often to automatically run the export: Manual Only, Daily, Weekly, or Monthly | Manual Only |
 | **Time** | Hour and minute (in 15-minute intervals) for the scheduled run | 02:00 |
 | **Day of Week** | (Weekly only) Which day of the week to run | Monday |
@@ -83,7 +96,16 @@ A status indicator shows whether the scheduler is active and when the next run i
 
 ## Using the Dashboard
 
-### Sidebar - Query List
+### Top Workflow Switch
+
+At the top of the window you can switch between:
+
+- `SQL Export`
+- `Volume Export`
+
+Each workflow has its own status, output location, and manual run action.
+
+### SQL Export Sidebar - Query List
 
 The left sidebar shows all discovered SQL queries:
 - **Built-in** queries are bundled with the app (marked with a label)
@@ -95,17 +117,17 @@ If an external query has the same filename as a built-in one, the external versi
 
 | Button | Action |
 |--------|--------|
-| **Export Now** (play icon) | Immediately run all queries and generate CSVs |
-| **Open Output** (folder icon) | Open the local output directory in Finder |
+| **Export Now** (play icon) | Runs the currently selected workflow |
+| **Open Output** (folder icon) | Opens the current workflow's local output directory in Finder |
 | **Settings** (gear icon) | Open the Settings window |
 
 ### Progress
 
-During an export, a progress bar appears showing:
+During an SQL export, a progress bar appears showing:
 - Overall completion percentage
 - The name of the currently executing query
 
-### Results Tab
+### SQL Results Tab
 
 After an export completes, the Results tab shows a table with:
 - Query name
@@ -113,7 +135,7 @@ After an export completes, the Results tab shows a table with:
 - Number of rows and columns returned
 - Execution time
 
-### Log Tab
+### SQL Log Tab
 
 The Log tab provides a live, scrollable view of all activity:
 - **INFO** - normal operations (export started, query completed, files written)
@@ -124,7 +146,44 @@ Use the filter buttons to show only specific log levels.
 
 ---
 
-## Output Structure
+## Volume Export Workflow
+
+When `Volume Export` is selected, the main pane shows the volume-export run state and the last per-volume results list.
+
+### Volume Export Behavior
+
+- Fetches the p5 volume list using local `nsdchat`
+- Filters to archive volumes if that setting is enabled
+- Optionally switches eligible `Full` archive volumes to `Readonly`
+- Exports one TSV inventory file per targeted volume
+- Optionally exports a full volume list CSV
+- Optionally mirrors exported files to a secondary mounted network path
+
+### Volume Export Naming
+
+The app uses the p5 volume number as the base filename:
+
+- `10001.tsv`
+- `10001_BARCODE.tsv`
+- `10001_BARCODE_suspect.tsv`
+
+Placeholder barcode values such as `<empty>` fall back to the p5 volume number so files do not collide.
+
+### Volume Export Output Structure
+
+Each volume export creates a timestamped folder:
+
+```
+~/Documents/ArchiveTSV/
+  VolumeExport-2026-03-25_113259/
+    10001.tsv
+    10002.tsv
+    p5-volumes-list_2026-03-25_113259.csv
+```
+
+If generation sorting is enabled, per-volume TSVs may be placed inside subfolders such as `LTO-5`, `LTO-6`, or `Unknown`.
+
+## SQL Output Structure
 
 Each export creates a timestamped folder:
 
@@ -137,7 +196,7 @@ Each export creates a timestamped folder:
     ...
 ```
 
-If a network volume path is configured and the volume is mounted, all CSV files are also copied there.
+If a network copy path is configured and the volume is mounted, the exported files are also copied there.
 
 ---
 
@@ -166,7 +225,7 @@ The app ships with 13 built-in queries:
 To add your own queries:
 
 1. Create a folder for your `.sql` files (e.g., `~/Documents/P5Queries/`)
-2. In Settings > Paths, set the **External SQL Directory** to that folder
+2. In Settings > SQL Export, set the **External SQL Directory** to that folder
 3. Write standard SQL queries against the P5 `resources.db` schema
 4. Use the placeholder `{{MIN_SIZE_KB}}` in your SQL to reference the configured minimum size threshold (value is in KB)
 
@@ -196,8 +255,11 @@ Open this location from Settings > Advanced > **Open in Finder**.
 
 | Issue | Solution |
 |-------|----------|
-| "Database not found" error | Verify the database path in Settings > Paths. Ensure the app is running on the P5 server |
+| "Database not found" error | Verify the database path in Settings > SQL Export. Ensure the app is running on the P5 server |
+| `nsdchat` not found | Verify the path in Settings > Volume Export and confirm the app is running on the P5 server |
+| Second volume export failed because the file already exists | Turn on Overwrite or change naming mode; placeholder barcodes such as `<empty>` already fall back to the p5 volume number |
 | Empty CSV output | Check that archive jobs above the minimum size threshold exist in the database |
-| Network copy skipped | The network volume is not mounted. Mount the volume and re-run the export |
+| Empty or unexpected TSV output | Check the targeted volume state, archive-only filter, and whether the volume inventory is accessible through local `nsdchat` |
+| Network copy skipped | The network destination is not mounted. Mount the volume and re-run the export |
 | Scheduled export did not run | The app must be running for schedules to fire. It does not run in the background when quit |
 | Permission denied | The app requires read access to `resources.db`. Run under a user account with appropriate file permissions |
