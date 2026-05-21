@@ -1,243 +1,72 @@
-# P5 Archive Jobs CSV Export
+# P5 Archive Export
 
-**Usage guide for `archive-jobs-export-csv.sh`**
+Native macOS tools for exporting and backing up Archiware P5 data.
 
-Copyright Mat X 2026
+This repo contains two companion apps that share a core Swift package:
 
----
+- `P5Window`: full windowed app with three workflows (SQL Export, Volume Export, Backup Export)
+- `P5MenuBar`: lightweight menu bar app for quick runs and always-on scheduling
+- `P5ExportCore`: shared export, scheduling, logging, volume-export, and backup logic
 
-## What It Does
+## Current Capabilities (v1.5)
 
-`archive-jobs-export-csv.sh` is a Bash script that runs on an Archiware P5 server to export archive job data from the P5 SQLite database (`resources.db`) to CSV files. It executes every `.sql` file in a queries directory, writes timestamped CSV output to a local volume, and copies the results to a network share.
+### SQL Export
+- Export from `resources.db` to CSV using 13 built-in and/or external SQL queries
+- Configurable CSV delimiter, size threshold, and search label
+- Optional secondary network-copy destination
 
-This script was the original automation tool for tracking large archive jobs. It has since evolved into a pair of native macOS applications (see [Evolution](#evolution) below), but remains a functional standalone option for environments where a simple cron/launchd job is preferred over a GUI.
+### Volume Export
+- Local volume discovery and per-volume TSV inventory export using `nsdchat`
+- Optional archive-volume filtering
+- Optional switch of `Full` archive volumes to `Readonly` before export
+- Optional export of a full p5 volume list CSV
+- Optional secondary network-copy destination
+- Optional organization by LTO generation
 
----
+### Backup Export
+- Compressed `.tar.gz` archive of the P5 `config/` and `log/` directories
+- Option to exclude clips/preview folders (can be tens or hundreds of GB)
+- Option to backup clips separately in a second archive
+- Archive Index Inspector: discovers indexes via `nsdchat -c ArchiveIndex names` with filesystem fallback
+- Admin credential storage in macOS Keychain for unattended scheduled backups
+- Optional secondary network-copy destination
 
-## Requirements
+### Automation
+- Shared schedule that can run SQL Export, Volume Export, SQL + Volume, Backup Export, or All Workflows
+- Daily, Weekly, or Monthly frequency with configurable time
 
-- macOS with Bash 3.2+
-- SQLite3 (included with macOS)
-- Read access to the P5 database at `/usr/local/aw/config/joblog/resources.db`
-- SQL query files in `/Library/Scripts/sql/sql_queries/`
-- A mounted network volume at `/Volumes/NAS`
-- Local backup volume at `/Volumes/Backup/AW/ArchiveSQL`
+## Workflow Model
 
----
+The app is organized around three workflows:
 
-## Configuration
+- `SQL Export` — database analysis CSVs
+- `Volume Export` — per-volume inventory TSVs and volume list CSV
+- `Backup Export` — compressed config/log archives (.tar.gz)
 
-All paths are hard-coded at the top of the script for launchd compatibility (no environment variables or user input):
+In the main app, these are separate top-level modes with a segmented picker.
+In the menu bar app, each workflow has its own manual run button and status area.
 
-| Variable | Value | Purpose |
-|----------|-------|---------|
-| `DB_PATH` | `/usr/local/aw/config/joblog/resources.db` | P5 SQLite database |
-| `SQL_QUERIES_DIR` | `/Library/Scripts/sql/sql_queries` | Directory of `.sql` query files |
-| `SOURCE_BASE` | `/Volumes/Backup/AW/ArchiveSQL` | Local output base directory |
-| `SEARCH_LABEL` | `ArchiveJobs_ResourcesDB` | Prefix for timestamped run folders |
-| `NETWORK_VOLUME` | `/Volumes/NAS` | Network share mount point |
-| `DEST_DIR` | `/Volumes/NAS/ArchiveCSV` | Network destination for CSV copies |
-| `LOG_DIR` | `/Users/Shared/ArchiveCSV/logs` | Log file location |
+## Volume Export Naming
 
-To change any path, edit the variable directly in the script.
+Volume TSVs use the p5 volume number as the base filename:
 
----
+- no barcode: `10001.tsv`
+- with barcode: `10001_BARCODE.tsv`
+- suspect volume: `10001_BARCODE_suspect.tsv`
 
-## What It Does Step by Step
+Placeholder barcode values such as `<empty>` fall back to the p5 volume number.
 
-1. **Creates the log directory** and begins logging to `/Users/Shared/ArchiveCSV/logs/run.log`
-2. **Checks the network volume** is mounted at `/Volumes/NAS` — exits with an error if not
-3. **Checks freshness of existing CSVs** on the network volume — if the newest CSV is less than 24 hours old, the run is skipped (see [Staleness Check](#staleness-check) below). Use `--force` to bypass this check.
-4. **Creates a timestamped run directory** under `SOURCE_BASE`, e.g.:
-   ```
-   /Volumes/Backup/AW/ArchiveSQL/ArchiveJobs_ResourcesDB-2026-02-03_140000/
-   ```
-5. **Runs every `.sql` file** found in `SQL_QUERIES_DIR` against the P5 database using `sqlite3`, writing each result as a CSV with headers:
-   ```
-   archive-jobs-above-1gb_2026-02-03_140000.csv
-   jobs-by-client_2026-02-03_140000.csv
-   ...
-   ```
-6. **Copies all generated CSVs** to the network volume at `/Volumes/NAS/ArchiveCSV/`
-7. **Logs a summary** of how many files were copied
+## Backup Export Output
 
----
-
-## Output Structure
+Each backup creates a timestamped folder:
 
 ```
-/Volumes/Backup/AW/ArchiveSQL/
-  ArchiveJobs_ResourcesDB-2026-02-03_140000/
-    archive-jobs-above-1gb_2026-02-03_140000.csv
-    jobs-by-client_2026-02-03_140000.csv
-    yearly-status-summary_2026-02-03_140000.csv
-    ...
-
-/Volumes/NAS/ArchiveCSV/
-    archive-jobs-above-1gb_2026-02-03_140000.csv   (flat copy)
-    jobs-by-client_2026-02-03_140000.csv
-    ...
+~/Documents/P5Backup/
+  P5Backup-2026-05-21_140000/
+    p5_backup_2026-05-21_140000.tar.gz
+    p5_backup_clips_2026-05-21_140000.tar.gz  (if clips backed up separately)
 ```
 
-Local output is organized into timestamped subdirectories. The network copy is a flat directory — each run overwrites files with the same query name from previous runs (filenames include timestamps, so in practice each run adds new files).
+## Next Planned Step
 
----
-
-## Running the Script
-
-### Manual execution
-
-```bash
-sudo bash /path/to/archive-jobs-export-csv.sh
-```
-
-To bypass the staleness check and force a fresh export:
-
-```bash
-sudo bash /path/to/archive-jobs-export-csv.sh --force
-```
-
-The short form `-f` is also accepted.
-
-Root or equivalent permissions may be needed to read `/usr/local/aw/config/joblog/resources.db`.
-
-### Automated scheduling with launchd
-
-Create a launchd plist (e.g., `/Library/LaunchDaemons/com.matx.archive-csv-export.plist`) to run the script on a schedule:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.matx.archive-csv-export</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/bin/bash</string>
-        <string>/Library/Scripts/archive-jobs-export-csv.sh</string>
-    </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>2</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
-    <key>StandardOutPath</key>
-    <string>/tmp/archive-csv-export.stdout</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/archive-csv-export.stderr</string>
-</dict>
-</plist>
-```
-
-Load and start:
-
-```bash
-sudo launchctl load /Library/LaunchDaemons/com.matx.archive-csv-export.plist
-```
-
----
-
-## Staleness Check
-
-Before generating any CSVs, the script checks whether the existing files on the network volume (`/Volumes/NAS/ArchiveCSV/`) are still fresh. It finds the newest `.csv` file by modification time and compares its age against a 24-hour threshold (`MAX_AGE_SECONDS=86400`).
-
-| Condition | Behaviour |
-|-----------|-----------|
-| Newest CSV is **less than 24 hours old** | Run is skipped — logs the file name and age, exits cleanly |
-| Newest CSV is **more than 24 hours old** | CSVs are considered stale — proceeds with regeneration |
-| **No CSVs** exist on the network volume | Proceeds with generation (first run) |
-| `--force` / `-f` flag is passed | Staleness check is skipped entirely |
-
-This prevents redundant exports when the script is triggered more frequently than once per day (e.g., by launchd retries or manual runs). The log will show either a "fresh / skipping" or "stale / regenerating" message so you can confirm what happened.
-
----
-
-## Log File
-
-All output is logged to:
-
-```
-/Users/Shared/ArchiveCSV/logs/run.log
-```
-
-Each run is delimited by `========== RUN START ==========` and `========== RUN END ==========` markers with timestamps on every line.
-
----
-
-## Adding SQL Queries
-
-Place any `.sql` file in `/Library/Scripts/sql/sql_queries/` and the script will pick it up automatically on the next run. Each file is executed against the P5 `resources.db` database with CSV headers enabled.
-
-Queries should be single-statement SELECT queries. Multi-statement files will execute but only the last statement's output is captured in the CSV.
-
----
-
-## Error Handling
-
-The script uses `set -e` — any command failure causes an immediate exit. Specific checks:
-
-- **Network volume not mounted** — logs an error and exits before any queries run
-- **No `.sql` files found** — logs an error and exits
-- **SQLite errors** — `set -e` causes the script to abort on any query failure
-
----
-
-## Evolution
-
-This project started as a single shell script and grew into a suite of native macOS applications.
-
-### Stage 1: Shell Script
-
-`archive-jobs-export-csv.sh` was the original tool — a straightforward Bash script designed to be run manually or via launchd. It handled the core workflow: run SQL queries against the P5 database, export to CSV, copy to a network share. All configuration was hard-coded, which made it reliable for unattended scheduling but required editing the script to change any setting.
-
-A second variant (`archive_csv_sync.sh`) was created with slightly different paths and labels for a different deployment environment, highlighting the limitation of hard-coded configuration.
-
-### Stage 2: Native Mac App (P5 Archive Export)
-
-The shell script was rebuilt as a native SwiftUI application (**P5 Archive Export**) targeting macOS 12+. The core workflow remained the same, but the app added:
-
-- A full GUI with dashboard, settings panel, query browser, results table, and log viewer
-- Configurable settings (database path, output directory, network volume, size threshold, CSV delimiter, schedule) persisted in UserDefaults — no more editing scripts
-- 13 bundled SQL queries (up from the handful used by the shell script), including new analytical queries for throughput analysis, storage growth trends, and size distribution
-- A built-in scheduler with daily, weekly, and monthly options
-- Read-only SQLite access via the C API for safe operation against a live P5 database
-- Real-time progress reporting during exports
-- RFC 4180 compliant CSV output with configurable delimiters
-- Graceful handling of unmounted network volumes (warning instead of hard failure)
-
-### Stage 3: Menu Bar App (P5 Archive Export MenuBar)
-
-A companion menu bar utility was built for macOS 14+, sharing the same core library (**P5ExportCore**) as the windowed app. The menu bar app provides:
-
-- An always-available archive box icon in the menu bar with no Dock presence
-- A popover interface for quick status checks and one-click exports
-- Compact inline settings
-- The same scheduling engine as the windowed app
-
-Both apps share settings via a common UserDefaults suite, so changes in one are reflected in the other. They can be run independently or side by side.
-
-### Architecture
-
-```
-archive-jobs-export-csv.sh          (standalone shell script)
-        |
-        v
-P5ExportCore                        (shared Swift package)
-   |              |
-   v              v
-P5Window          P5MenuBar
-(Mac app)         (Menu bar app)
-```
-
-The shell script remains available for minimal environments or as a reference implementation. The Mac apps are distributed as signed `.app` bundles and `.dmg` installers.
-
-## Acknowledgments
-
-Built for use with [Archiware P5](https://www.archiware.com/)
-
-## 2026 code.matx.ca - P5 Archive Tools for macOS & iOS
-[For feedback, reach out via GitHub](https://github.com/macvfx) and [Support this project by optional donation](https://www.paypal.com/ncp/payment/ZX52VNS49SRZA)
+The current remote-development branch is proving `awsock`-based remote volume operations and is expected to evolve into a separate remote-focused app direction: `P5 Archive Remote`.
