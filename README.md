@@ -1,6 +1,6 @@
 # P5 Archive Export
 
-Two macOS apps, and and example script, for exporting and backing up Archiware P5 data. Mac and Menu bar tools for exporting important Archiware P5 archive data. (See also code.matx.ca and https://github.com/macvfx/archiware)
+Two macOS apps, and an example script, for exporting and backing up Archiware P5 data. Mac and Menu bar tools for exporting important Archiware P5 archive data. (See also code.matx.ca and https://github.com/macvfx/archiware)
 
 This repo contains two companion apps that share a core Swift package:
 
