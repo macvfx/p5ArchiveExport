@@ -6,12 +6,13 @@
 
 ## What Is This App?
 
-P5 Archive Export is a native macOS application with two local workflows:
+P5 Archive Export is a native macOS application with three local workflows:
 
 - `SQL Export` reads the Archiware P5 `resources.db` SQLite database and exports archive job data to CSV files.
-- `Volume Export` uses local `nsdchat` to export per-volume tape or container inventories to TSV files, with optional archive-only filtering and optional `Full` to `Readonly` switching before export.
+- `Volume Export` uses local `nsdchat` to export per-volume tape or container inventories to TSV files, with optional archive-only filtering and optional `Full` to `Readonly` switching before export. It can also export a full volume list CSV.
+- `Backup Export` creates compressed `.tar.gz` archives of the P5 `config/` and `log/` directories, suitable for regular backups and server migrations. It includes an Archive Index Inspector and optional clips exclusion.
 
-**Important:** This first-pass volume workflow is designed for local use on the Archiware P5 server. The SQL database is opened read-only, but the optional volume-mode step can change eligible archive volumes from `Full` to `Readonly` if that setting is enabled.
+**Important:** The volume and backup workflows are designed for local use on the Archiware P5 server. The SQL database is opened read-only. The optional volume-mode step can change eligible archive volumes from `Full` to `Readonly` if that setting is enabled. The backup archive requires admin privileges to read `/usr/local/aw/`.
 
 ---
 
@@ -20,7 +21,7 @@ P5 Archive Export is a native macOS application with two local workflows:
 ### First Launch
 
 1. Open **P5 Archive Export.app**
-2. The main dashboard window appears with a top workflow switch for `SQL Export` and `Volume Export`
+2. The main dashboard window appears with a top workflow switch for `SQL Export`, `Volume Export`, and `Backup Export`
 3. Before running your first export, open **Settings** to configure your paths
 
 ### Opening Settings
@@ -32,7 +33,7 @@ P5 Archive Export is a native macOS application with two local workflows:
 
 ## Settings
 
-Settings are organized into four tabs:
+Settings are organized into five tabs:
 
 ### SQL Export
 
@@ -73,11 +74,28 @@ Each path field has:
 | **Sort by generation** | Organizes output into LTO generation subfolders when possible | On |
 | **Overwrite files** | Allows existing files to be replaced during export | Off |
 
+### Backup
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **P5 Config Directory** | Path to the Archiware P5 config directory | `/usr/local/aw/config/` |
+| **P5 Log Directory** | Path to the Archiware P5 log directory | `/usr/local/aw/log/` |
+| **Exclude clips/preview folders** | Omit the large clips/preview folders from the backup archive | On |
+| **Backup clips separately** | When clips are excluded, create a second archive containing only the clips folders | Off |
+| **Admin Username** | macOS admin username for unattended scheduled backups | Empty |
+| **Admin Password** | Stored in the macOS Keychain via the "Save to Keychain" button | Empty |
+| **Local Backup Output Directory** | Where backup archives are saved | `~/Documents/P5Backup` |
+| **Secondary Network Copy Destination** | Optional mounted path to copy the archive to after creation | Empty |
+
+**Admin credentials:** The backup archive requires root read access to `/usr/local/aw/`. If admin credentials are stored in the Keychain, the tar command runs silently using those credentials. If no credentials are stored, the standard macOS admin password dialog appears each time. Stored credentials are required for unattended scheduled backups.
+
+**Archive Index Inspector:** A manual "Scan" button discovers archive indexes via `nsdchat -c ArchiveIndex names` (or falls back to scanning the filesystem at `{config}/index/archive/` when P5 is stopped). Each discovered index shows its name, total size, and clips folder size.
+
 ### Automation
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| **Scheduled Workflow** | Which workflow the timer runs: SQL Export, Volume Export, or Both | SQL Export |
+| **Scheduled Workflow** | Which workflow the timer runs: SQL Export, Volume Export, SQL + Volume, Backup Export, or All Workflows | SQL Export |
 | **Frequency** | How often to automatically run the export: Manual Only, Daily, Weekly, or Monthly | Manual Only |
 | **Time** | Hour and minute (in 15-minute intervals) for the scheduled run | 02:00 |
 | **Day of Week** | (Weekly only) Which day of the week to run | Monday |
@@ -102,6 +120,7 @@ At the top of the window you can switch between:
 
 - `SQL Export`
 - `Volume Export`
+- `Backup Export`
 
 Each workflow has its own status, output location, and manual run action.
 
@@ -200,6 +219,40 @@ If a network copy path is configured and the volume is mounted, the exported fil
 
 ---
 
+## Backup Export Workflow
+
+When `Backup Export` is selected, the main pane shows the backup run state and the last run results.
+
+### Backup Export Behavior
+
+1. Validates that the P5 config directory exists (log directory is optional)
+2. Creates a timestamped output directory
+3. Measures config and log directory sizes
+4. Discovers archive indexes (via nsdchat CLI or filesystem scan)
+5. Creates a compressed `.tar.gz` archive with admin privileges
+6. Optionally creates a separate clips archive (if clips are excluded but "Backup clips separately" is on)
+7. Optionally copies the archive to a secondary mounted network path
+
+### Backup Export Output Structure
+
+```
+~/Documents/P5Backup/
+  P5Backup-2026-05-21_140000/
+    p5_backup_2026-05-21_140000.tar.gz
+    p5_backup_clips_2026-05-21_140000.tar.gz  (optional, clips-only archive)
+```
+
+### Backup Results Dashboard
+
+After a backup completes, the dashboard shows:
+- Config, log, and archive sizes with compression ratio
+- Whether clips were excluded and/or backed up separately
+- Archive index table with name, total size, and clips size
+- Network copy status
+- Step-by-step results with duration and any errors
+
+---
+
 ## Bundled SQL Queries
 
 The app ships with 13 built-in queries:
@@ -262,4 +315,7 @@ Open this location from Settings > Advanced > **Open in Finder**.
 | Empty or unexpected TSV output | Check the targeted volume state, archive-only filter, and whether the volume inventory is accessible through local `nsdchat` |
 | Network copy skipped | The network destination is not mounted. Mount the volume and re-run the export |
 | Scheduled export did not run | The app must be running for schedules to fire. It does not run in the background when quit |
+| Backup archive creation failed | The admin password dialog was cancelled or incorrect. Store credentials in Settings > Backup for unattended use |
+| Backup scheduled but no admin dialog | Store admin credentials in Settings > Backup > Admin Credentials so the tar command can run without an interactive prompt |
+| Archive Index Inspector shows no indexes | Click "Scan" manually. If P5 is stopped, the scanner falls back to filesystem discovery at `{config}/index/archive/` |
 | Permission denied | The app requires read access to `resources.db`. Run under a user account with appropriate file permissions |
