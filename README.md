@@ -1,6 +1,6 @@
 # P5 Archive Export
 
-Native macOS tools for exporting and backing up Archiware P5 data.
+Two macOS apps for exporting and backing up Archiware P5 data. Mac and Menu bar tools for exporting important Archiware P5 archive data.
 
 This repo contains two companion apps that share a core Swift package:
 
