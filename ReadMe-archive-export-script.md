@@ -198,7 +198,7 @@ A second variant (`archive_csv_sync.sh`) was created with slightly different pat
 
 ### Stage 2: Native Mac App (P5 Archive Export)
 
-The shell script was rebuilt as a native SwiftUI application (**P5 Archive Export**) targeting macOS 12+. The core workflow remained the same, but the app added:
+The shell script was rebuilt as a native SwiftUI application (**P5 Archive Export**) targeting macOS 12+ at the time. <!-- claim-check: allow: narrates the floor this stage shipped with, not the current one --> The app requires macOS 13.5 today. The core workflow remained the same, but the app added:
 
 - A full GUI with dashboard, settings panel, query browser, results table, and log viewer
 - Configurable settings (database path, output directory, network volume, size threshold, CSV delimiter, schedule) persisted in UserDefaults — no more editing scripts
@@ -211,7 +211,7 @@ The shell script was rebuilt as a native SwiftUI application (**P5 Archive Expor
 
 ### Stage 3: Menu Bar App (P5 Archive Export MenuBar)
 
-A companion menu bar utility was built for macOS 14+, sharing the same core library (**P5ExportCore**) as the windowed app. The menu bar app provides:
+A companion menu bar utility was built for macOS 14+, sharing the same core library (**P5ExportCore**) as the windowed app. <!-- claim-check: allow: the menu bar app's own floor; the combined receipt carries the windowed app's --> The menu bar app provides:
 
 - An always-available archive box icon in the menu bar with no Dock presence
 - A popover interface for quick status checks and one-click exports
