@@ -1,6 +1,6 @@
 # P5 Archive Export - Menu Bar App User Guide
 
-**Workflow Guide** | macOS 14 (Sonoma) and later
+**Workflow Guide** | v1.5.1 | macOS 14 (Sonoma) and later
 
 ---
 

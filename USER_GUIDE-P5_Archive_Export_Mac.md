@@ -1,6 +1,6 @@
 # P5 Archive Export - Mac App User Guide
 
-**Workflow Guide** | macOS 12 (Monterey) and later
+**Workflow Guide** | v1.5.1 | macOS 13.5 and later
 
 ---
 
@@ -289,6 +289,22 @@ Custom queries with the same filename as a built-in query will override the buil
 ## Shared Settings
 
 Both P5 Archive Export (Mac) and P5 Archive Export (Menu Bar) share the same settings. Changes made in one app are immediately reflected in the other. You can use either app independently or run both simultaneously.
+
+---
+
+## Checking for Updates
+
+**P5 Archive Export ▸ Check for Updates…** asks GitHub whether a newer release exists and
+reports the result either way. The app also checks quietly at launch, at most once every
+24 hours, and only says something when there is a newer version.
+
+Nothing is downloaded or installed for you. The check compares version numbers and sends
+no information about your Mac or your P5 server. Pre-release builds are not offered. When
+a newer version is found, the alert offers a **Download** button that opens the release
+page.
+
+The menu bar app has the same command, as **Check for Updates…** at the bottom of its
+popover.
 
 ---
 
