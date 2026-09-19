@@ -1,0 +1,124 @@
+# Release Notes
+
+Human-facing release notes, newest first. See `CHANGELOG.md` for the detailed,
+per-change log.
+
+---
+
+## 1.5.2
+
+### A real Help menu
+
+Until now the Help menu held a single item, "P5 Archive Export Help", and it
+opened the About box. There was no guide inside the app at all.
+
+Help ▸ P5 Archive Export User Guide (⌘?) now opens the guide in its own window,
+with a searchable list of sections down the side. Help ▸ What's New… opens these
+release notes.
+
+Both windows render the documents this app ships with, rather than a copy
+retyped into the app, so what you read in the app is what the written guide
+says. Update the guide, and the app updates with it.
+
+### The remote-server panel is documented
+
+Settings ▸ Volume Export ▸ Remote Servers has been in the app since 1.5, and was
+never described anywhere you could reach. The guide now has a settings reference
+for the panel and a workflow section for what it does.
+
+Two things in it are worth knowing before you use it. It talks to the other P5
+server by running your local `nsdchat` over Archiware's `awsock` protocol, not
+over the REST API, so the nsdchat path still has to be right. And a remote
+export is written to the remote server's own disk — the files do not come back
+to your Mac, and the output directory you name has to already exist there.
+
+---
+
+## 1.5.1
+
+### The update alert could be dismissed
+
+Its OK button took several attempts to click. The alert attached itself to
+whichever window happened to be key, including panels that take it with them
+when focus moves, and the app did not come to the front first, so the first
+click only activated it. The menu bar app was worst affected, having no ordinary
+window.
+
+### The version in the app is the version that was built
+
+It came from a file edited by hand beside the project rather than from the
+project itself, and had drifted. Two different builds had shipped calling
+themselves 1.5 build 4.
+
+---
+
+## 1.5
+
+### Backup Export
+
+A third workflow beside SQL Export and Volume Export. It makes compressed
+`.tar.gz` archives of the P5 `config/` and `log/` directories, for routine
+backups and for server migrations. Clips and preview folders can be left out of
+the main archive, and optionally written to a second archive of their own.
+
+### Archive Index Inspector
+
+In Settings, finds your archive indexes and reports their sizes, including the
+clips and preview folders. It works from the filesystem when P5 is stopped.
+
+### Volume Export
+
+Exports one TSV inventory per tape or container using local `nsdchat`, with
+optional archive-only filtering, an optional full volume-list CSV, optional
+generation sorting, and an optional copy to a mounted network destination.
+Eligible archive volumes can be switched from Full to Readonly first.
+
+Folder mode chooses between a dated folder per run and one standard
+`VolumeExport` folder for incremental runs.
+
+### Automation covers every workflow
+
+A schedule can run SQL Export, Volume Export, SQL + Volume, Backup Export, or
+all workflows.
+
+---
+
+## 1.3
+
+### About window
+
+About P5 Archive Export opens a window with the app name, version, build number
+and a link to code.matx.ca. The menu bar app shows the same information at the
+foot of its Settings popover.
+
+Version numbers shown in the app are now read from the app itself, so they stay
+current.
+
+---
+
+## 1.2
+
+### Clearer Settings
+
+The four settings tabs moved from a flat list to bordered groups with headings.
+Long paths can be scrolled and read in full, each path field says what it is
+for, and every tab scrolls, so nothing becomes unreachable in a small window.
+
+---
+
+## 1.1
+
+### Choosing which queries run
+
+A single checkbox turns all 13 built-in queries on or off. The
+archive-jobs-above-1gb query has its own toggle that still works when the others
+are off, and a warning appears when both are off and only external queries would
+run.
+
+---
+
+## 1.0
+
+The first release: a windowed Mac app and a menu bar app, sharing one core.
+SQL Export reads the P5 `resources.db` read-only and writes archive job data to
+CSV, with 13 bundled queries and support for your own.

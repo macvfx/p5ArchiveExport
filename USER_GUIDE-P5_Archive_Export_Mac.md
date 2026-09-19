@@ -1,6 +1,6 @@
 # P5 Archive Export - Mac App User Guide
 
-**Workflow Guide** | v1.5.1 | macOS 13.5 and later
+**Workflow Guide** | v1.5.2 | macOS 13.5 and later
 
 ---
 
@@ -13,6 +13,10 @@ P5 Archive Export is a native macOS application with three local workflows:
 - `Backup Export` creates compressed `.tar.gz` archives of the P5 `config/` and `log/` directories, suitable for regular backups and server migrations. It includes an Archive Index Inspector and optional clips exclusion.
 
 **Important:** The volume and backup workflows are designed for local use on the Archiware P5 server. The SQL database is opened read-only. The optional volume-mode step can change eligible archive volumes from `Full` to `Readonly` if that setting is enabled. The backup archive requires admin privileges to read `/usr/local/aw/`.
+
+Volume Export also carries a test panel that runs volume commands against a
+remote P5 server over `awsock`. It is labelled `(v1.5 Test)` in the app and is
+described under [Remote Volume Export (v1.5 Test)](#remote-volume-export-v15-test).
 
 ---
 
@@ -69,10 +73,48 @@ Each path field has:
 | **Network Copy Destination** | Optional mounted path to copy volume TSVs and volume-list CSVs to | Empty |
 | **Naming Mode** | Controls whether filenames include mode/date suffixes for non-readonly volumes | `Volume + Barcode` |
 | **Archive volumes only** | Limits the run to archive volumes only | On |
+| **Folder mode** | Choose a dated run folder for separate snapshots, or a standard `VolumeExport` folder for incremental runs | Dated run folder |
 | **Export volume list CSV** | Exports a full p5 volume list CSV alongside per-volume TSVs | Off |
 | **Switch Full to Readonly before export** | Attempts to change eligible archive volumes from `Full` to `Readonly` before inventory export | Off |
 | **Sort by generation** | Organizes output into LTO generation subfolders when possible | On |
 | **Overwrite files** | Allows existing files to be replaced during export | Off |
+
+#### Remote Servers (v1.5 Test)
+
+The last group in the Volume Export tab connects to a **different** P5 server and runs the same volume commands there. The app does this by calling the local `nsdchat` binary with a server argument, so the `nsdchat Path` above still has to point at a working local binary even when every command runs against a remote server. There is no REST API involved; the transport is Archiware's own `awsock` socket protocol.
+
+The panel is labelled `(v1.5 Test)` in the app because it is a proving ground, not a finished workflow. Read the limits below before relying on it.
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| **Saved Server** | Picker listing saved server profiles. Appears once at least one profile is saved | - |
+| **Server Name** | Label for the profile, shown in the picker and in status messages | Empty |
+| **Host** | Hostname or IP address of the remote P5 server | Empty |
+| **Port** | P5 socket port, not the web UI port | `9001` |
+| **Username** | P5 user the commands run as | Empty |
+| **Archive Index** | Recorded on the profile. Not yet used by any remote command | `Default-Archive` |
+| **Password (stored in Keychain)** | Saved to the login Keychain, one item per profile. Never written to preferences | Empty |
+
+**New**, **Save Server** and **Delete** manage profiles. Save is disabled until name, host, username and a numeric port are all filled in. Deleting a profile also removes its Keychain password.
+
+Profiles are stored in the shared settings domain, so the menu bar app loads the same list. Only the window app shows this panel.
+
+##### What the test buttons do
+
+| Button | Action |
+|--------|--------|
+| **Test Local Volume List** | Lists volumes on the local server, to confirm the `nsdchat` path works before blaming the network |
+| **Test Selected Remote Server** | Lists volumes on the selected remote server. Every other remote control stays hidden until this succeeds |
+| **Export Remote Batch** | Exports the first 1 or 2 volumes from the fetched list. The batch size is capped at 2 in code, whatever the picker offers |
+| **Fetch Selected Volume Details** | Reads usage, mode, state, barcode, label, media type, used size, last used and location for one volume |
+| **Test Full -> Readonly** | Changes one remote volume from `Full` to `Readonly`. Enabled only when the fetched volume is currently `Full`. This writes to the remote server |
+| **Export Selected Volume TSV** | Exports one volume inventory using the same six columns as a local run |
+
+##### Where remote TSV files are written
+
+**Remote exports do not come back to your Mac.** The **Remote Test Output Directory** field (default `/Users/Shared`) is a path *on the remote P5 server*, and that is where the files land. The app sends the destination as `localhost:/path`, and `localhost` is resolved by the P5 server at the far end of the socket, not by the Mac running the app. The Local Volume Output Directory, Network Copy Destination, Folder mode, generation sorting and overwrite settings all apply to local runs only; none of them affect a remote export.
+
+This means the directory has to already exist on the remote server and be writable by the P5 user. Collecting the files afterwards is a separate step you do yourself.
 
 ### Backup
 
@@ -81,7 +123,7 @@ Each path field has:
 | **P5 Config Directory** | Path to the Archiware P5 config directory | `/usr/local/aw/config/` |
 | **P5 Log Directory** | Path to the Archiware P5 log directory | `/usr/local/aw/log/` |
 | **Exclude clips/preview folders** | Omit the large clips/preview folders from the backup archive | On |
-| **Backup clips separately** | When clips are excluded, create a second archive containing only the clips folders | Off |
+| **Backup clips separately** | When clips are excluded, create a second archive containing discovered `clips`, `preview`, and `previews` folders from archive indexes | Off |
 | **Admin Username** | macOS admin username for unattended scheduled backups | Empty |
 | **Admin Password** | Stored in the macOS Keychain via the "Save to Keychain" button | Empty |
 | **Local Backup Output Directory** | Where backup archives are saved | `~/Documents/P5Backup` |
@@ -90,6 +132,8 @@ Each path field has:
 **Admin credentials:** The backup archive requires root read access to `/usr/local/aw/`. If admin credentials are stored in the Keychain, the tar command runs silently using those credentials. If no credentials are stored, the standard macOS admin password dialog appears each time. Stored credentials are required for unattended scheduled backups.
 
 **Archive Index Inspector:** A manual "Scan" button discovers archive indexes via `nsdchat -c ArchiveIndex names` (or falls back to scanning the filesystem at `{config}/index/archive/` when P5 is stopped). Each discovered index shows its name, total size, and clips folder size.
+
+**Clips backup flow:** Enable **Exclude clips/preview folders** to keep clips out of the main `p5_backup` archive. Then enable **Backup clips separately** if you still want a second `p5_backup_clips` archive containing only discovered `clips`, `preview`, and `previews` folders from the archive indexes.
 
 ### Automation
 
@@ -178,6 +222,40 @@ When `Volume Export` is selected, the main pane shows the volume-export run stat
 - Optionally exports a full volume list CSV
 - Optionally mirrors exported files to a secondary mounted network path
 
+The volume-list CSV can be imported with the TSV folder by P5 Archive Browser.
+Browser 0.19 build 33 normalizes balanced SQL-style outer single quotes before
+matching volume IDs, labels, and barcodes, preventing quoted metadata rows from
+becoming separate zero-file tapes.
+
+### Volume TSV Columns and Browser Compatibility
+
+The current Volume Export requests `ppath size handle btime mtime`. P5 writes
+the archive index path first, so every exported inventory uses this six-column
+order:
+
+```text
+index path ⇥ ppath ⇥ size ⇥ handle ⇥ btime ⇥ mtime
+```
+
+This is the format currently supported by P5 Archive Browser. Browser retains
+the index path and size; it accepts but does not yet persist the other four
+fields. The same layout can also be created directly with:
+
+```text
+nsdchat -c Volume VOLUME_ID inventory localhost:/absolute/output.tsv \
+  ppath size handle btime mtime
+```
+
+Archiware P5's Web UI can export an eight-column order containing `index path,
+ppath, volumes, size, handle, btime, mtime, checksum`. We plan to test and
+support that richer schema in Browser, then expand P5 Archive Export to match.
+Until Browser's schema-aware importer ships, keep the current six-column output;
+the eight-column order moves `size` from column 3 to column 4.
+
+See
+[VOLUME_INVENTORY_COLUMN_EXPANSION_READINESS.md](./VOLUME_INVENTORY_COLUMN_EXPANSION_READINESS.md)
+for the implementation and end-to-end test sequence.
+
 ### Volume Export Naming
 
 The app uses the p5 volume number as the base filename:
@@ -190,7 +268,7 @@ Placeholder barcode values such as `<empty>` fall back to the p5 volume number s
 
 ### Volume Export Output Structure
 
-Each volume export creates a timestamped folder:
+By default, each volume export creates a timestamped folder:
 
 ```
 ~/Documents/ArchiveTSV/
@@ -200,7 +278,55 @@ Each volume export creates a timestamped folder:
     p5-volumes-list_2026-03-25_113259.csv
 ```
 
+For incremental inventories, set **Folder mode** to **Standard folder**. The app then reuses one `VolumeExport` folder:
+
+```
+~/Documents/ArchiveTSV/
+  VolumeExport/
+    10001.tsv
+    10002.tsv
+```
+
+With **Overwrite existing TSV files** off, later runs skip existing volume TSVs and add only new volume files. With overwrite on, matching volume TSVs are replaced in place.
+
 If generation sorting is enabled, per-volume TSVs may be placed inside subfolders such as `LTO-5`, `LTO-6`, or `Unknown`.
+
+### Remote Volume Export (v1.5 Test)
+
+Everything above describes a local run. The `Remote Servers (v1.5 Test)` panel in
+`Settings` > `Volume Export` runs the same volume commands against another P5
+server instead. It is a test path, documented here so its behavior is not a
+surprise, and it is not part of the normal export workflow.
+
+**How the connection is made.** The app runs your local `nsdchat` binary with a
+server argument, so the command is handled by the remote server's P5 instance:
+
+```text
+nsdchat -s awsock://USERNAME:PASSWORD@HOST:9001 -c Volume VOLUME_ID inventory \
+  localhost:/Users/Shared/VOLUME_ID.tsv ppath size handle btime mtime
+```
+
+Port `9001` is the P5 socket port. The password is read from the Keychain when
+the command runs; it is never stored in preferences and never appears in the
+settings file. The column layout is identical to a local export, so the output
+is readable by P5 Archive Browser on the same terms.
+
+**Where the files go.** The `localhost:` prefix is resolved by the remote
+server, so the TSV is written to the remote server's own disk. Nothing is
+transferred to the Mac running the app. Set **Remote Test Output Directory** to
+a path that already exists on the remote server and is writable by the P5 user.
+
+**Order of operations.** Save a server profile, then run
+**Test Selected Remote Server**. The metadata, mode-change and export controls
+only appear after a volume list has been fetched successfully, because they work
+from the names that fetch returned.
+
+**Current limits.** Batch export is capped at two volumes. The archive-only
+filter, naming mode, folder mode, generation sorting, overwrite handling,
+network copy and volume-list CSV are all local-run settings and have no effect
+on a remote export. The `Archive Index` field on a server profile is saved but
+not yet used. SQL Export and Backup Export are local-only and have no remote
+equivalent. Remote runs cannot be scheduled from the Automation tab.
 
 ## SQL Output Structure
 
@@ -230,7 +356,7 @@ When `Backup Export` is selected, the main pane shows the backup run state and t
 3. Measures config and log directory sizes
 4. Discovers archive indexes (via nsdchat CLI or filesystem scan)
 5. Creates a compressed `.tar.gz` archive with admin privileges
-6. Optionally creates a separate clips archive (if clips are excluded but "Backup clips separately" is on)
+6. Optionally creates a separate clips archive containing discovered `clips`, `preview`, and `previews` folders (only if clips are excluded and "Backup clips separately" is on)
 7. Optionally copies the archive to a secondary mounted network path
 
 ### Backup Export Output Structure
@@ -241,6 +367,8 @@ When `Backup Export` is selected, the main pane shows the backup run state and t
     p5_backup_2026-05-21_140000.tar.gz
     p5_backup_clips_2026-05-21_140000.tar.gz  (optional, clips-only archive)
 ```
+
+The clips-only archive is created only when both clips exclusion and separate clips backup are enabled. If no clip or preview folders are found under `config/index/archive/`, the run records a clips-archive step warning instead of creating a tiny empty-looking archive.
 
 ### Backup Results Dashboard
 
@@ -288,7 +416,29 @@ Custom queries with the same filename as a built-in query will override the buil
 
 ## Shared Settings
 
-Both P5 Archive Export (Mac) and P5 Archive Export (Menu Bar) share the same settings. Changes made in one app are immediately reflected in the other. You can use either app independently or run both simultaneously.
+Both P5 Archive Export (Mac) and P5 Archive Export (Menu Bar) share the same settings. Changes made in one app are immediately reflected in the other. The menu bar app opens its settings in a separate shared-settings window from the popover's **Settings...** gear button. You can use either app independently or run both simultaneously.
+
+---
+
+## Help Inside the App
+
+The **Help** menu holds two windows.
+
+| Item | Shortcut | What it shows |
+|------|----------|---------------|
+| **P5 Archive Export User Guide** | ⌘? | This guide, with a searchable list of its sections down the side |
+| **What's New...** | - | The release notes: what changed in each version, in plain terms |
+
+Both windows render the documents the app ships with - this guide and
+`RELEASES.md` - rather than a separate copy written into the app, so the text
+you read in the app is the text in the written guide. The search field matches
+section headings and body text, including table cells and command examples.
+
+Before 1.5.2 the Help menu had one item that opened the About box, and there was
+no guide inside the app.
+
+The menu bar app has no Help menu. Use the Mac app's guide, or the written
+guides in the repository.
 
 ---
 

@@ -8,7 +8,7 @@ This repo contains two companion apps that share a core Swift package:
 - `P5MenuBar`: lightweight menu bar app for quick runs and always-on scheduling
 - `P5ExportCore`: shared export, scheduling, logging, volume-export, and backup logic
 
-## Current Capabilities (v1.5.1)
+## Current Capabilities (v1.5.2)
 
 ### SQL Export
 - Export from `resources.db` to CSV using 13 built-in and/or external SQL queries
@@ -22,6 +22,11 @@ This repo contains two companion apps that share a core Swift package:
 - Optional export of a full p5 volume list CSV
 - Optional secondary network-copy destination
 - Optional organization by LTO generation
+
+- Remote servers (`v1.5 Test`): the same volume commands run against another P5
+  server by way of local `nsdchat` over Archiware's `awsock` protocol, not the
+  REST API. Remote exports are written to that server's own disk and are not
+  transferred back. See the Mac app guide.
 
 ### Backup Export
 - Compressed `.tar.gz` archive of the P5 `config/` and `log/` directories
@@ -66,6 +71,18 @@ Each backup creates a timestamped folder:
     p5_backup_2026-05-21_140000.tar.gz
     p5_backup_clips_2026-05-21_140000.tar.gz  (if clips backed up separately)
 ```
+
+## Help and Docs
+
+The Mac app carries its own help. `Help` > `P5 Archive Export User Guide` (⌘?)
+opens the guide in a window with a searchable section list, and
+`Help` > `What's New...` opens the release notes. Both render the documents
+below, bundled into the app, so the app and the written guides say the same
+thing.
+
+- [Mac app guide](./USER_GUIDE-P5_Archive_Export_Mac.md)
+- [Menu bar guide](./USER_GUIDE-P5_Archive_Export_MenuBar.md)
+- [Release notes](./RELEASES.md)
 
 ## Next Planned Step
 
