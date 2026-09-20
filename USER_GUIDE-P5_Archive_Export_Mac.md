@@ -252,9 +252,8 @@ support that richer schema in Browser, then expand P5 Archive Export to match.
 Until Browser's schema-aware importer ships, keep the current six-column output;
 the eight-column order moves `size` from column 3 to column 4.
 
-See
-[VOLUME_INVENTORY_COLUMN_EXPANSION_READINESS.md](./VOLUME_INVENTORY_COLUMN_EXPANSION_READINESS.md)
-for the implementation and end-to-end test sequence.
+The implementation notes and end-to-end test sequence for that change are kept
+with the source rather than here.
 
 ### Volume Export Naming
 
