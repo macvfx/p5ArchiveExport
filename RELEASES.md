@@ -13,9 +13,23 @@ The standalone export script on a P5 server runs whatever `.sql` files are in it
 own queries folder, and that folder is not updated when this app is. A server can
 therefore go on producing the output of an older version indefinitely.
 
-1.5.4 added a command to write the bundled queries to a folder so you could copy
-them across yourself. This release finishes the job: set **Server Queries Folder**
-in Settings, press **Deploy to Server**, and they are written straight into it.
+This release ships an installer package for them, beside the disk images:
+**P5-Archive-Export-SQL-Queries-1.5.5.pkg**. Double-click it on the server and the
+queries are installed to `/Library/Scripts/sql/sql_queries`. macOS asks for an
+administrator password in its own dialog, and nothing is typed into a terminal.
+
+It also leaves a receipt, so a server can be asked what it has rather than
+remembered:
+
+```
+pkgutil --pkg-info com.matx.p5archiveexport.sqlqueries
+```
+
+A new package is issued whenever the bundled queries change.
+
+If you would rather not use the installer, Settings gains a **Server Queries
+Folder** path and a **Deploy to Server** button, which writes them straight into
+that folder.
 
 That works wherever you can write to the folder — the app running on the server
 itself, or a mounted share that reaches it. The usual location,

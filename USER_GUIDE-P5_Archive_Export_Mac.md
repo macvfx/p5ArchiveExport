@@ -511,6 +511,32 @@ folder on the server — usually `/Library/Scripts/sql/sql_queries/`. That folde
 not updated when the app is, so a server can keep producing the output of an
 older version long after the app has moved on.
 
+### Installing the queries with the package
+
+The release ships **P5-Archive-Export-SQL-Queries-<version>.pkg** beside the disk
+images. Double-click it and the queries are installed to
+`/Library/Scripts/sql/sql_queries` on that machine. macOS asks for an
+administrator password through its own dialog; nothing is typed into a terminal.
+
+This is the recommended route for a P5 server, for two reasons beyond
+convenience. The system installer is the audited way to write to a folder owned
+by root, so no app has to hold privileges it otherwise never needs. And it leaves
+a receipt, so a machine can be asked what it actually has:
+
+```
+pkgutil --pkg-info com.matx.p5archiveexport.sqlqueries
+pkgutil --files   com.matx.p5archiveexport.sqlqueries
+```
+
+A copied folder cannot answer that question. A receipt can, which matters when a
+server has been running unattended for a year and nobody remembers which query
+set it carries.
+
+The package version tracks the app version, so the two can be compared directly.
+A new package is issued whenever the bundled queries change.
+
+#### Deploying from the app instead
+
 Set **Server Queries Folder** in `Settings ▸ SQL Export` to wherever that folder
 is, then press **Deploy to Server**. The bundled `.sql` files are written
 straight into it and the count is reported beside the button.
