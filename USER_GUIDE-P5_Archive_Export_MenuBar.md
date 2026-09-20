@@ -1,6 +1,6 @@
 # P5 Archive Export - Menu Bar App User Guide
 
-**Workflow Guide** | v1.5.3 | macOS 14 (Sonoma) and later
+**Workflow Guide** | v1.5.4 | macOS 14 (Sonoma) and later
 
 ---
 
@@ -139,6 +139,32 @@ If a network copy path is configured and mounted, the exported files are also co
 - suspect volume: `10001_BARCODE_suspect.tsv`
 
 Placeholder barcode values such as `<empty>` fall back to the p5 volume number.
+
+---
+
+## Charts and Chart Files
+
+The menu bar app has no charts of its own — the `Charts` tab lives in the main
+app — but it shares its settings, so a run started here produces the same chart
+files.
+
+`Settings ▸ SQL Export` carries three toggles:
+
+| Setting | What it writes | Default |
+|---------|----------------|---------|
+| **Chart data CSVs** | `weekly`, `monthly`, `quarterly`, `yearly` and `size-range` CSVs in plain numbers, for charting in a spreadsheet | On |
+| **HTML dashboard** | One self-contained page of charts, opening anywhere the file reaches | On |
+| **PDF of the dashboard** | The same page printed to A4. The slowest of the three, since it runs a web view | Off |
+
+They are written into the run folder beside the query CSVs and copied to the
+network volume with them.
+
+### Last archive
+
+The popover shows when anything was last archived — `Last archive 2 weeks ago ·
+12.6 GB` — with the exact date and plan name on hover. It reads only the most
+recent job, and says nothing at all when the P5 database cannot be reached from
+this Mac.
 
 ---
 

@@ -1,6 +1,6 @@
 # P5 Archive Export - Mac App User Guide
 
-**Workflow Guide** | v1.5.3 | macOS 13.5 and later
+**Workflow Guide** | v1.5.4 | macOS 13.5 and later
 
 ---
 
@@ -44,10 +44,13 @@ Settings are organized into five tabs:
 | Setting | Description | Default |
 |---------|-------------|---------|
 | **Search Label** | Prefix used for output folder names (e.g., `ArchiveJobs_ResourcesDB-2025-01-15_140000`) | `ArchiveJobs_ResourcesDB` |
-| **Minimum Job Size** | Only include archive jobs above this size threshold. Choose from 512 MB, 1 GB, 5 GB, 10 GB, or 50 GB | 1 GB |
+| **Minimum Job Size** | Only include archive jobs above this size threshold in the `archive-jobs-above-1gb` query. Choose from 512 MB, 1 GB, 5 GB, 10 GB, or 50 GB. It does not affect the charts, which describe every job | 1 GB |
 | **CSV Delimiter** | Field separator for exported CSV files: Comma, Tab, or Semicolon | Comma |
 | **Include all built-in queries** | Master toggle to include or exclude all 14 bundled SQL queries from each export run | On |
 | **Include archive-jobs-above-1gb query** | Keep the primary archive-jobs-above-1gb query enabled even when all other built-in queries are turned off. This toggle is grayed out when the master toggle above is on (since it is already included). | On |
+| **Also write chart data CSVs** | Per-period CSVs in plain numbers, for charting in a spreadsheet | On |
+| **Also write an HTML dashboard** | One self-contained page of charts, opening anywhere the file reaches | On |
+| **Also print that dashboard to PDF** | The same page printed to A4. The slowest of the three, since it runs a web view | Off |
 | **Database Path** | Full path to the Archiware P5 `resources.db` file | `/usr/local/aw/config/joblog/resources.db` |
 | **External SQL Directory** | Optional folder containing your own `.sql` query files | Empty |
 | **Local SQL Output Directory** | Where SQL CSV exports are saved | `~/Documents/ArchiveCSV` |
@@ -327,6 +330,61 @@ on a remote export. The `Archive Index` field on a server profile is saved but
 not yet used. SQL Export and Backup Export are local-only and have no remote
 equivalent. Remote runs cannot be scheduled from the Automation tab.
 
+## Charts
+
+The `Charts` tab beside `Results` and `Log` shows how much has been archived over
+time, read straight from the P5 database.
+
+### What each chart shows
+
+| Chart | What it answers |
+|-------|-----------------|
+| **Archived per week / month / quarter / year** | How much went to archive in each period. The picker switches the grain. |
+| **Cumulative growth** | The running total month by month. |
+| **Outcome by year** | Finished against incomplete volume, so a year where a lot did not complete is obvious. |
+| **Where the volume sits** | How many jobs fall into each job-size range, and how much storage each range accounts for. |
+
+Stat tiles above them give the totals, the busiest period and how many periods in
+range had no archiving at all.
+
+### Periods with no archiving
+
+A period where nothing was archived is drawn as a **grey bar**, not left out.
+
+This matters more than it sounds. A chart built only from periods that had
+activity runs a straight line across a pause, which reads as steady throughput.
+Archiving usually arrives in bursts, so the grey bars are often most of the
+chart, and the shape of the real pattern depends on them being there.
+
+A grey bar means "nothing was archived then". A coloured bar of zero height would
+mean "a job ran and moved nothing", which is a different thing.
+
+### Units
+
+Sizes scale to whatever suits the data — TB for a large archive, GB or MB for a
+small one — and the unit is named on the axis. Every value in one chart uses the
+same unit, so bars can be compared by eye.
+
+### Charting a folder of exported CSVs
+
+If this Mac cannot reach the P5 server, `Open Export Folder…` reads a folder of
+exported CSVs instead and draws the same charts from it. Point it at one of the
+timestamped run folders.
+
+Two things an export cannot tell the charts, both stated above them when they
+apply:
+
+- Exports made before version 1.5.3 have no `jobs-sum-per-week` file, so the
+  weekly chart falls back to the jobs-above-1GB file and covers only jobs above
+  that threshold. Re-exporting with a current version fixes it.
+- Monthly figures come from `cumulative-storage-growth`, which counts finished
+  jobs only, while the yearly and quarterly charts count every status. Their
+  totals genuinely differ, and neither is wrong.
+
+`Use the database` switches back.
+
+---
+
 ## SQL Output Structure
 
 Each export creates a timestamped folder:
@@ -339,6 +397,33 @@ Each export creates a timestamped folder:
     yearly-status-summary_2025-01-15_140000.csv
     ...
 ```
+
+### Chart Files
+
+When the chart outputs are enabled in Settings, each run also writes:
+
+```
+    weekly_2025-01-15_140000.csv
+    monthly_2025-01-15_140000.csv
+    quarterly_2025-01-15_140000.csv
+    yearly_2025-01-15_140000.csv
+    size-range_2025-01-15_140000.csv
+    dashboard_2025-01-15_140000.html
+    dashboard_2025-01-15_140000.pdf
+```
+
+These are for charting rather than reading. Where the query CSVs write
+`33.80 TB`, these write `33.8` — a value with the unit attached arrives in a
+spreadsheet as text and cannot be summed or plotted. Every period is present,
+including those with no archiving, with a `gap_filled` column marking the rows
+that were filled in.
+
+The HTML dashboard is a single self-contained page: no stylesheet, script or font
+is fetched, so it opens on any machine the file reaches, with or without
+internet. The PDF is that same page printed to A4.
+
+They carry the run's timestamp like everything else, and are copied to the
+network volume with the rest.
 
 If a network copy path is configured and the volume is mounted, the exported files are also copied there.
 
@@ -417,6 +502,27 @@ reading the CSV directly.
 Numeric columns are always added at the end of a query's column list, and the display
 columns keep their original names and positions, so anything that imports these files
 by column name is unaffected.
+
+### Getting the Queries onto a P5 Server
+
+The standalone export script runs whatever `.sql` files are in its own queries
+folder on the server — usually `/Library/Scripts/sql/sql_queries/`. That folder is
+not updated when the app is, so a server can keep producing the output of an
+older version long after the app has moved on.
+
+`Settings ▸ SQL Export ▸ Export Bundled Queries…` writes the bundled `.sql` files
+to a folder you choose, and reveals them in Finder. Copy them to the server's
+queries folder from there:
+
+```bash
+sudo cp /path/you/exported/*.sql /Library/Scripts/sql/sql_queries/
+```
+
+The app does not write to that folder itself: it needs administrator rights,
+which the app does not have and should not ask for.
+
+Only the server-side script needs this. The app runs its own bundled copies, so
+its exports are always current.
 
 ### Custom Queries
 
