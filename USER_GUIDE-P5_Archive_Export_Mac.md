@@ -1,6 +1,6 @@
 # P5 Archive Export - Mac App User Guide
 
-**Workflow Guide** | v1.5.4 | macOS 13.5 and later
+**Workflow Guide** | v1.5.5 | macOS 13.5 and later
 
 ---
 
@@ -51,6 +51,7 @@ Settings are organized into five tabs:
 | **Also write chart data CSVs** | Per-period CSVs in plain numbers, for charting in a spreadsheet | On |
 | **Also write an HTML dashboard** | One self-contained page of charts, opening anywhere the file reaches | On |
 | **Also print that dashboard to PDF** | The same page printed to A4. The slowest of the three, since it runs a web view | Off |
+| **Server Queries Folder** | Where the standalone export script on a P5 server reads its queries from, used by `Deploy to Server` | `/Library/Scripts/sql/sql_queries` |
 | **Database Path** | Full path to the Archiware P5 `resources.db` file | `/usr/local/aw/config/joblog/resources.db` |
 | **External SQL Directory** | Optional folder containing your own `.sql` query files | Empty |
 | **Local SQL Output Directory** | Where SQL CSV exports are saved | `~/Documents/ArchiveCSV` |
@@ -510,16 +511,23 @@ folder on the server — usually `/Library/Scripts/sql/sql_queries/`. That folde
 not updated when the app is, so a server can keep producing the output of an
 older version long after the app has moved on.
 
-`Settings ▸ SQL Export ▸ Export Bundled Queries…` writes the bundled `.sql` files
-to a folder you choose, and reveals them in Finder. Copy them to the server's
-queries folder from there:
+Set **Server Queries Folder** in `Settings ▸ SQL Export` to wherever that folder
+is, then press **Deploy to Server**. The bundled `.sql` files are written
+straight into it and the count is reported beside the button.
+
+That works whenever the folder is one you can write to — the app running on the
+P5 server itself with the folder opened up, or a mounted share that reaches it.
+
+The default, `/Library/Scripts/sql/sql_queries`, is owned by root, and no app
+running as an ordinary user can write there. Deploy will say so. In that case use
+**Export Bundled Queries…**, which writes them to a folder you choose and reveals
+them in Finder, then copy them across:
 
 ```bash
 sudo cp /path/you/exported/*.sql /Library/Scripts/sql/sql_queries/
 ```
 
-The app does not write to that folder itself: it needs administrator rights,
-which the app does not have and should not ask for.
+The app does not ask for administrator rights to do this itself.
 
 Only the server-side script needs this. The app runs its own bundled copies, so
 its exports are always current.

@@ -5,6 +5,32 @@ per-change log.
 
 ---
 
+## 1.5.5
+
+### Deploying the queries to a P5 server
+
+The standalone export script on a P5 server runs whatever `.sql` files are in its
+own queries folder, and that folder is not updated when this app is. A server can
+therefore go on producing the output of an older version indefinitely.
+
+1.5.4 added a command to write the bundled queries to a folder so you could copy
+them across yourself. This release finishes the job: set **Server Queries Folder**
+in Settings, press **Deploy to Server**, and they are written straight into it.
+
+That works wherever you can write to the folder — the app running on the server
+itself, or a mounted share that reaches it. The usual location,
+`/Library/Scripts/sql/sql_queries`, is owned by root and no app running as you can
+write there; Deploy says so plainly and gives you the one-line copy instead.
+
+Both apps have it.
+
+### Version
+
+1.5.5 rather than another build of 1.5.4, because an update check compares the
+version string.
+
+---
+
 ## 1.5.4
 
 ### Charts

@@ -1,6 +1,6 @@
 # P5 Archive Export - Menu Bar App User Guide
 
-**Workflow Guide** | v1.5.4 | macOS 14 (Sonoma) and later
+**Workflow Guide** | v1.5.5 | macOS 14 (Sonoma) and later
 
 ---
 
@@ -158,6 +158,13 @@ files.
 
 They are written into the run folder beside the query CSVs and copied to the
 network volume with them.
+
+### Deploying queries to a server
+
+`Settings ▸ SQL Export` carries the **Server Queries Folder** path and a
+**Deploy Queries to Server** button, the same as the main app. The server-side
+export script runs whatever is in that folder, and it is not updated when this
+app is.
 
 ### Last archive
 
