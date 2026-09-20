@@ -1,6 +1,6 @@
 # P5 Archive Export - Mac App User Guide
 
-**Workflow Guide** | v1.5.2 | macOS 13.5 and later
+**Workflow Guide** | v1.5.3 | macOS 13.5 and later
 
 ---
 
@@ -46,7 +46,7 @@ Settings are organized into five tabs:
 | **Search Label** | Prefix used for output folder names (e.g., `ArchiveJobs_ResourcesDB-2025-01-15_140000`) | `ArchiveJobs_ResourcesDB` |
 | **Minimum Job Size** | Only include archive jobs above this size threshold. Choose from 512 MB, 1 GB, 5 GB, 10 GB, or 50 GB | 1 GB |
 | **CSV Delimiter** | Field separator for exported CSV files: Comma, Tab, or Semicolon | Comma |
-| **Include all built-in queries** | Master toggle to include or exclude all 13 bundled SQL queries from each export run | On |
+| **Include all built-in queries** | Master toggle to include or exclude all 14 bundled SQL queries from each export run | On |
 | **Include archive-jobs-above-1gb query** | Keep the primary archive-jobs-above-1gb query enabled even when all other built-in queries are turned off. This toggle is grayed out when the master toggle above is on (since it is already included). | On |
 | **Database Path** | Full path to the Archiware P5 `resources.db` file | `/usr/local/aw/config/joblog/resources.db` |
 | **External SQL Directory** | Optional folder containing your own `.sql` query files | Empty |
@@ -55,10 +55,10 @@ Settings are organized into five tabs:
 
 **How these toggles work together:**
 
-- **Default (both on):** All 13 built-in queries run. The "Include archive-jobs-above-1gb query" checkbox is grayed out because it is already included as part of the full set.
+- **Default (both on):** All 14 built-in queries run. The "Include archive-jobs-above-1gb query" checkbox is grayed out because it is already included as part of the full set.
 - **Only archive-jobs-above-1gb:** Uncheck "Include all built-in queries" first. The second checkbox becomes active. Leave "Include archive-jobs-above-1gb query" checked. Now only that single query will run (plus any external queries).
 - **Only external queries:** Uncheck "Include all built-in queries", then uncheck "Include archive-jobs-above-1gb query". An orange warning will appear: *"All built-in queries are disabled. Only external queries will run."*
-- **Re-enabling all queries:** First uncheck "Include archive-jobs-above-1gb query", then check "Include all built-in queries" back on. This restores the default state with all 13 built-in queries active.
+- **Re-enabling all queries:** First uncheck "Include archive-jobs-above-1gb query", then check "Include all built-in queries" back on. This restores the default state with all 14 built-in queries active.
 
 Each path field has:
 - A **green checkmark** or **red X** indicating whether the path exists
@@ -383,7 +383,7 @@ After a backup completes, the dashboard shows:
 
 ## Bundled SQL Queries
 
-The app ships with 13 built-in queries:
+The app ships with 14 built-in queries:
 
 | Query | Description |
 |-------|-------------|
@@ -395,11 +395,29 @@ The app ships with 13 built-in queries:
 | `jobs-quarterly-summary` | Quarterly rollup with job counts and success rates |
 | `jobs-size-distribution-buckets` | Jobs categorized into size buckets (1-5 GB, 5-10 GB, etc.) |
 | `jobs-stale-incomplete` | Jobs started more than 7 days ago that never completed |
+| `jobs-sum-per-week` | Archive volume per week, all statuses, with idle weeks present as zero rows |
 | `jobs-throughput-analysis` | All finished jobs ranked by transfer speed (MB/s) |
 | `recent-jobs-last-30-days` | Jobs from the last 30 days with status |
 | `tape-utilization-summary` | Total jobs and data per LTO tape |
 | `top-20-largest-jobs` | The 20 largest archive jobs by size |
 | `yearly-status-summary` | Annual breakdown by job status with size totals |
+
+### Reading the size columns
+
+Queries that report a size emit it twice, in two columns:
+
+- **A display column** with the unit in brackets, e.g. `Total Size (TB)`, whose value
+  is formatted for reading: `33.80 TB`.
+- **A numeric column** with a bare unit suffix, e.g. `Total TB`, whose value is a plain
+  number: `33.8`.
+
+Spreadsheets and charting tools need the numeric column — a value like `33.80 TB`
+imports as text and cannot be plotted or summed. The display column is there for
+reading the CSV directly.
+
+Numeric columns are always added at the end of a query's column list, and the display
+columns keep their original names and positions, so anything that imports these files
+by column name is unaffected.
 
 ### Custom Queries
 

@@ -1,4 +1,9 @@
 -- Extract the first LTO tape label (L1-L9) from volumeList for clarity using a CTE
+-- Column convention: a parenthesised unit -- [Total Size (TB)] -- is a formatted
+-- display string ("33.80 TB"). A bare unit suffix -- [Total TB] -- is a plain number
+-- for charting. Display columns keep their existing names AND positions; numeric
+-- columns are appended at the end, so importers that map by header name (P5 Archive
+-- Browser, Project Folder Tracker, p5chart.py) are unaffected.
 WITH JobWithTape AS (
   SELECT *,
 	IFNULL(
@@ -49,12 +54,18 @@ SELECT
   label AS [Job Type],
   datetime(timeStarted, 'unixepoch') AS [Time Started],   
   datetime(timeCompleted, 'unixepoch') AS [Time Completed],
-  -- Duration in days
+  -- Duration: days + HH:MM:SS (fixed: was using strftime %j which wraps at 365 days)
   CASE
-	WHEN strftime('%j', timeCompleted - timeStarted, 'unixepoch') = '001' THEN '1 day'
-	WHEN strftime('%j', timeCompleted - timeStarted, 'unixepoch') = '000' THEN ''
-	ELSE ltrim(strftime('%j', timeCompleted - timeStarted, 'unixepoch'), '0') || ' day' || 
-	  CASE WHEN ltrim(strftime('%j', timeCompleted - timeStarted, 'unixepoch'), '0') = '1' THEN '' ELSE 's' END
+    WHEN timeCompleted IS NULL OR timeStarted IS NULL OR timeCompleted <= timeStarted THEN ''
+    ELSE
+      CASE
+        WHEN (timeCompleted - timeStarted) / 86400 > 0 THEN
+          CAST((timeCompleted - timeStarted) / 86400 AS TEXT) || ' day' ||
+          CASE WHEN (timeCompleted - timeStarted) / 86400 = 1 THEN ' ' ELSE 's ' END ||
+          strftime('%H:%M:%S', (timeCompleted - timeStarted) % 86400, 'unixepoch')
+        ELSE
+          strftime('%H:%M:%S', timeCompleted - timeStarted, 'unixepoch')
+      END
   END AS [Duration],
   -- Extracted status message
   CASE
@@ -78,7 +89,8 @@ SELECT
 	ELSE
 	  printf('%.2f KB', CAST(numKbytes AS FLOAT))
   END AS [Size],
-  [New Saved Files]
+  [New Saved Files],
+  ROUND(CAST(numKbytes AS FLOAT) / 1024 / 1024 / 1024, 6) AS [Size TB]
 FROM CleanedJobWithTape
 WHERE CAST(numKbytes AS FLOAT) > 1024 * 1024
   AND class LIKE '%ArchiveJobResource%'

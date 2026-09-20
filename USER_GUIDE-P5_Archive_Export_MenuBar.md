@@ -1,6 +1,6 @@
 # P5 Archive Export - Menu Bar App User Guide
 
-**Workflow Guide** | v1.5.2 | macOS 14 (Sonoma) and later
+**Workflow Guide** | v1.5.3 | macOS 14 (Sonoma) and later
 
 ---
 
@@ -144,7 +144,7 @@ Placeholder barcode values such as `<empty>` fall back to the p5 volume number.
 
 ## Bundled SQL Queries
 
-The app ships with 13 built-in queries:
+The app ships with 14 built-in queries:
 
 | Query | Description |
 |-------|-------------|
@@ -156,11 +156,29 @@ The app ships with 13 built-in queries:
 | `jobs-quarterly-summary` | Quarterly rollup with job counts and success rates |
 | `jobs-size-distribution-buckets` | Jobs categorized into size buckets (1-5 GB, 5-10 GB, etc.) |
 | `jobs-stale-incomplete` | Jobs started more than 7 days ago that never completed |
+| `jobs-sum-per-week` | Archive volume per week, all statuses, with idle weeks present as zero rows |
 | `jobs-throughput-analysis` | All finished jobs ranked by transfer speed (MB/s) |
 | `recent-jobs-last-30-days` | Jobs from the last 30 days with status |
 | `tape-utilization-summary` | Total jobs and data per LTO tape |
 | `top-20-largest-jobs` | The 20 largest archive jobs by size |
 | `yearly-status-summary` | Annual breakdown by job status with size totals |
+
+### Reading the size columns
+
+Queries that report a size emit it twice, in two columns:
+
+- **A display column** with the unit in brackets, e.g. `Total Size (TB)`, whose value
+  is formatted for reading: `33.80 TB`.
+- **A numeric column** with a bare unit suffix, e.g. `Total TB`, whose value is a plain
+  number: `33.8`.
+
+Spreadsheets and charting tools need the numeric column — a value like `33.80 TB`
+imports as text and cannot be plotted or summed. The display column is there for
+reading the CSV directly.
+
+Numeric columns are always added at the end of a query's column list, and the display
+columns keep their original names and positions, so anything that imports these files
+by column name is unaffected.
 
 ### Custom Queries
 
