@@ -15,6 +15,18 @@ This repo contains two companion apps that share a core Swift package:
 - Configurable CSV delimiter, size threshold, and search label
 - Optional secondary network-copy destination
 
+### Charts
+- A `Charts` tab showing archived volume per week, month, quarter or year, cumulative growth, outcome by year, and storage by job-size range
+- Periods with no archiving are drawn as gaps rather than omitted, so a pause cannot read as steady throughput
+- Sizes scale to the data and name their unit, so a small archive does not read as `0.00 TB`
+- Every grain comes from one read of every job, so the totals agree with each other
+- Charts can be drawn from a folder of exported CSVs when the P5 database is out of reach, with the limits of that source stated on screen
+
+### Chart and Query Delivery
+- Each run can also write per-period CSVs in plain numbers, a self-contained HTML dashboard, and a PDF of it, copied to the network destination with everything else
+- A signed, notarized installer package ships with each release to place the bundled SQL queries on a P5 server, leaving a `pkgutil` receipt that says which set a machine has
+- `Settings ▸ SQL Export ▸ Deploy to Server` writes them directly where the destination is writable, such as a mounted share
+
 ### Volume Export
 - Local volume discovery and per-volume TSV inventory export using `nsdchat`
 - Optional archive-volume filtering
