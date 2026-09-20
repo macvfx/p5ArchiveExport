@@ -5,6 +5,35 @@ per-change log.
 
 ---
 
+## 1.5.3
+
+### Archive volume per week, and columns you can actually chart
+
+Exports now carry a fourteenth query, `jobs-sum-per-week`: how much was archived
+each week, with weeks that had no archiving present as zero rows rather than
+missing. A gap in the record is the thing most likely to mislead — a chart drawn
+from rows that exist will run a straight line across a pause and make it look
+like steady throughput.
+
+Every query that reports a size now writes it twice: once formatted for reading,
+as `33.80 TB`, and once as a plain number, as `33.8`. Spreadsheets and charting
+tools need the plain number — a value with the unit attached arrives as text and
+cannot be plotted or summed. Columns with the unit in brackets, like
+`Total Size (TB)`, are for reading; columns with a bare unit, like `Total TB`,
+are for charting.
+
+The new columns are added at the end and nothing that was there before has moved
+or been renamed, so anything already importing these files — P5 Archive Browser,
+Project Folder Tracker, your own spreadsheets — carries on unchanged.
+
+### A charting tool for existing exports
+
+`scripts/p5chart.py` turns either the P5 job database or a folder of exported
+CSVs into charts and tidy spreadsheet-ready files. It works on exports already
+sitting on your share, including ones made before this release.
+
+---
+
 ## 1.5.2
 
 ### A real Help menu
