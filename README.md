@@ -99,3 +99,9 @@ thing.
 ## Next Planned Step
 
 The current remote-development branch is proving `awsock`-based remote volume operations and is expected to evolve into a separate remote-focused app direction: `P5 Archive Remote`.
+
+## License
+
+Free to use for your own business or work, including on client jobs. You may not sell,
+redistribute or sublicense the software. The terms are the
+[PolyForm Internal Use License 1.0.0](LICENSE). Copies obtained earlier under Apache-2.0 keep that license.
