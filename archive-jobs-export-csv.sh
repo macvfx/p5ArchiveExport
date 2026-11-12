@@ -127,6 +127,7 @@ for sql_file in "$SQL_QUERIES_DIR"/*.sql; do
     log "Generating CSV: $output_csv"
 
     sqlite3 \
+        -readonly \
         -cmd ".header on" \
         -cmd ".mode csv" \
         -cmd ".output $output_csv" \
