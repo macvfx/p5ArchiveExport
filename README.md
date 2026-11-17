@@ -8,12 +8,14 @@ This repo contains two companion apps that share a core Swift package:
 - `P5MenuBar`: lightweight menu bar app for quick runs and always-on scheduling
 - `P5ExportCore`: shared export, scheduling, logging, volume-export, and backup logic
 
-## Current Capabilities (v1.5.5)
+## Current Capabilities (v1.5.6)
 
 ### SQL Export
 - Export from `resources.db` to CSV using 14 built-in and/or external SQL queries
 - Configurable CSV delimiter, size threshold, and search label
 - Optional secondary network-copy destination
+- If `resources.db` can't be opened in place (a write-ahead-log database with no `-shm`), it is read from a temporary copy with its `-wal` and `-shm`, deleted afterwards; a setting turns this off for very large databases
+- Settings opens on the section for the workflow showing in the main window
 
 ### Charts
 - A `Charts` tab showing archived volume per week, month, quarter or year, cumulative growth, outcome by year, and storage by job-size range

@@ -5,6 +5,32 @@ per-change log.
 
 ---
 
+## 1.5.6
+
+### resources.db that cannot be opened in place
+
+A write-ahead-log database with no `-shm` file beside it (P5 stopped, or the file
+copied without its companions) opens in SQLite but fails on the first read, which
+used to surface as "unable to open database file" on a file that was plainly
+there. The app now falls back to a temporary copy of `resources.db` with its
+`-wal` and `-shm`, reads that, and deletes it afterwards; the original is never
+touched. A new **If it can't be opened** setting in both apps chooses between
+using the copy and reading in place only, for a database too large to copy.
+
+### Settings opens on the section for the workflow you are in
+
+In the window app, Settings opens on SQL Export, Volume Export or Backup to match
+the top workflow switch, each time it is opened.
+
+### What's New is brief
+
+Help ▸ What's New used to show these notes in full. It now shows a line or two
+of highlights for each version. Two buttons at the foot of the window lead to
+the detail: **Release Notes** opens the full notes for every release in your
+browser, and **User Guide** opens the in-app guide.
+
+---
+
 ## 1.5.5
 
 ### Deploying the queries to a P5 server

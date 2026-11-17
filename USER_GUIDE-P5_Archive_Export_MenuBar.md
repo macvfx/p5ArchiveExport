@@ -65,7 +65,7 @@ Expand the **Settings** section within the popover to configure:
 
 #### SQL Export
 
-- Database path
+- Database path, and **If it can't be opened** (use a temporary copy of `resources.db` with its `-wal` and `-shm` when it can't be read in place, or read in place only — useful for a very large database)
 - External SQL directory
 - Built-in query toggle
 - Local SQL output folder
@@ -261,6 +261,7 @@ Application logs are written to:
 |-------|----------|
 | Menu bar icon not visible | Check if the icon is hidden behind the notch (on MacBook Pro) or collapsed by macOS. Try holding Command and dragging menu bar icons to rearrange |
 | "Database not found" error | Verify the database path in Settings. Ensure the app is running on the P5 server |
+| "unable to open database file" although the file exists | A write-ahead-log database with no `-shm` beside it. Set **If it can't be opened** to **Use a temporary copy if needed** in Settings > SQL Export. If the message is about permissions, your user cannot read the file at all |
 | `nsdchat` not found | Verify the `nsdchat` path under Volume Export settings |
 | Empty CSV output | Check that archive jobs above the minimum size threshold exist in the database |
 | Empty or unexpected TSV output | Check the archive-only filter, volume state, and whether `nsdchat` can read that volume locally |

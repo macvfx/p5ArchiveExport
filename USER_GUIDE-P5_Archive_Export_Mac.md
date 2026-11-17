@@ -33,6 +33,8 @@ described under [Remote Volume Export (v1.5 Test)](#remote-volume-export-v15-tes
 - Click the **gear icon** in the toolbar, or
 - Use the menu bar: **P5 Archive Export > Settings...** (Command + ,)
 
+Settings opens on the section that matches the workflow you are in: **SQL Export** while the top switch is on `SQL Export`, **Volume Export** on `Volume Export`, **Backup** on `Backup Export`. This happens each time the window is brought forward, so if you wandered to another tab in Settings, opening it again returns you to the matching one. Automation and Advanced have no matching workflow; click them as usual.
+
 ---
 
 ## Settings
@@ -53,9 +55,12 @@ Settings are organized into five tabs:
 | **Also print that dashboard to PDF** | The same page printed to A4. The slowest of the three, since it runs a web view | Off |
 | **Server Queries Folder** | Where the standalone export script on a P5 server reads its queries from, used by `Deploy to Server` | `/Library/Scripts/sql/sql_queries` |
 | **Database Path** | Full path to the Archiware P5 `resources.db` file | `/usr/local/aw/config/joblog/resources.db` |
+| **If it can't be opened** | What to do when `resources.db` can't be read where it is. **Use a temporary copy if needed** copies the database with its `-wal` and `-shm` files to a private temporary folder, reads the copy, and deletes it afterwards. **Read in place only** never copies; choose it for a very large database | Use a temporary copy if needed |
 | **External SQL Directory** | Optional folder containing your own `.sql` query files | Empty |
 | **Local SQL Output Directory** | Where SQL CSV exports are saved | `~/Documents/ArchiveCSV` |
 | **Network Copy Destination** | Optional mounted path to copy SQL CSVs to after export | Empty |
+
+**When the database can't be opened in place.** `resources.db` is a write-ahead-log database. If it has no `-shm` file beside it (P5 is stopped, or the file was copied without its companions), SQLite can open it but not read it, and a read-only connection cannot create the missing file. The app then makes a temporary copy of `resources.db`, `-wal` and `-shm`, reads that, and deletes it when the run ends. The original is never touched and the copy cannot be written to. The copy is only made after a direct read has failed, so a healthy database is read in place. It needs free disk space equal to the database and says so if there isn't enough. The run log notes when a copy was used. The copy fallback cannot help when the file itself is unreadable by your user; that is a permissions problem.
 
 **How these toggles work together:**
 
@@ -632,6 +637,8 @@ Open this location from Settings > Advanced > **Open in Finder**.
 | Issue | Solution |
 |-------|----------|
 | "Database not found" error | Verify the database path in Settings > SQL Export. Ensure the app is running on the P5 server |
+| "unable to open database file" although the file exists | A write-ahead-log database with no `-shm` beside it. Set **If it can't be opened** to **Use a temporary copy if needed** in Settings > SQL Export. If the message is about permissions, your user cannot read the file at all |
+| "A temporary copy needs … and only … is free" | The copy needs space equal to `resources.db`. Free some, or choose **Read in place only** and make the database readable in place |
 | `nsdchat` not found | Verify the path in Settings > Volume Export and confirm the app is running on the P5 server |
 | Second volume export failed because the file already exists | Turn on Overwrite or change naming mode; placeholder barcodes such as `<empty>` already fall back to the p5 volume number |
 | Empty CSV output | Check that archive jobs above the minimum size threshold exist in the database |
