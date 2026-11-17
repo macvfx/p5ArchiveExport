@@ -338,7 +338,7 @@ equivalent. Remote runs cannot be scheduled from the Automation tab.
 
 ## Charts
 
-The `Charts` tab beside `Results` and `Log` shows how much has been archived over
+Inside `SQL Export`, **Results**, **Log** and **Charts** are underline tabs just under the workflow switch: the selected one is orange with an underline. The `Charts` tab shows how much has been archived over
 time, read straight from the P5 database.
 
 ### What each chart shows
@@ -348,7 +348,7 @@ time, read straight from the P5 database.
 | **Archived per week / month / quarter / year** | How much went to archive in each period. The picker switches the grain. |
 | **Cumulative growth** | The running total month by month. |
 | **Outcome by year** | Finished against incomplete volume, so a year where a lot did not complete is obvious. |
-| **Where the volume sits** | How many jobs fall into each job-size range, and how much storage each range accounts for. |
+| **Where the volume sits** | One row per job-size range: a bar, the storage that range holds, and how many jobs and what share of the total. A range with no jobs shows an empty bar. |
 
 Stat tiles above them give the totals, the busiest period and how many periods in
 range had no archiving at all.

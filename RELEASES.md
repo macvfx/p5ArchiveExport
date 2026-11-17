@@ -5,6 +5,25 @@ per-change log.
 
 ---
 
+## 1.5.7
+
+### Results, Log and Charts are underline tabs
+
+The workflow switch at the top (SQL Export, Volume Export, Backup Export) and the
+three views inside SQL Export were two identical orange segmented controls, one
+above the other, which read as one row of six. The lower three are now underline
+tabs over the content they control: the selected one in orange with an underline,
+the others grey. The workflow switch is unchanged.
+
+### Charts: "Where the volume sits" is readable again
+
+The size-range chart drew its labels on top of the bars and of the neighbouring
+row's figures. It is now drawn as plain rows, the size range, a bar, then the
+amount and "N jobs · N%", the way the HTML dashboard shows it. A size range with
+no jobs shows an empty track.
+
+---
+
 ## 1.5.6
 
 ### resources.db that cannot be opened in place
